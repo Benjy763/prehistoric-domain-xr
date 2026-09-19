@@ -235,6 +235,27 @@ dérive de version de dépendance :
   alors sa propre copie de `three@0.173.5`
   (`node_modules/aframe/node_modules/three`)
 
+### Durcissement anti-abus (2026-09-05)
+Suite à une question légitime sur le risque de facture en cas d'attaque
+bot/trafic anormal :
+- **R2 n'a pas de frais d'egress** (contrairement à AWS S3) — le pire cas
+  reste borné aux Class B ops (`$0.36/million` au-delà de 10M/mois
+  gratuits), pas une explosion de bande passante facturée
+- **Faille corrigée dans `_worker.js`** : la clé de cache se basait sur
+  l'URL complète (query string incluse) — un attaquant ajoutant un
+  paramètre aléatoire (`?x=random`) à chaque requête aurait pu forcer un
+  cache miss systématique, donc une vraie lecture R2 à chaque fois (le
+  seul poste qui coûte réellement de l'argent ici). Fix : la clé de cache
+  ne retient que le paramètre `lastmod` (celui qu'on contrôle, versioning
+  de build) et ignore tout le reste — testé avec plusieurs query strings
+  aléatoires, toujours 200
+- **Recommandé côté Benjamin (dashboard, pas faisable par Claude)** :
+  - Billing → Spending Limits : configurer un plafond de dépense
+    (bloque le service plutôt que facturer au-delà)
+  - Security → Bots → Bot Fight Mode (gratuit, un clic)
+  - Vérifier que le plan Workers est bien resté "Free" (plafond dur de
+    100k requêtes/jour, pas de facturation au-delà sur ce plan)
+
 ### Reste à faire (côté Benjamin)
 - Vérifier le rendu réel des 15 scènes VR dans un navigateur — fait une
   première fois (a permis de trouver les bugs CORS + aframe ci-dessus),
